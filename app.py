@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from importlib import import_module
 import os
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 
 # import camera driver
 if os.environ.get('CAMERA'):
@@ -15,9 +15,21 @@ else:
 app = Flask(__name__)
 
 
-@app.route('/')
+def handle_buttons(form):
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    if 'b1' in form:
+        print('Button 1 was pressed')
+    elif 'b2' in form:
+        print('Button 2 was pressed')
+    else:
+        print(f"Unknown Button {form=}")
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
     """Video streaming home page."""
+    if request.method == 'POST':
+        handle_buttons(request.form)
     return render_template('index.html')
 
 
@@ -32,9 +44,11 @@ def gen(camera):
 @app.route('/video_feed')
 def video_feed():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        gen(Camera()),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', threaded=True)
+    app.run(host='0.0.0.0', threaded=True, debug=True)
