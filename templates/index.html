@@ -1,14 +1,41 @@
-<html>
-  <head>
-    <title>Video Streaming Demonstration</title>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+<body>
     <h1>Video Streaming Demonstration</h1>
-    <form method="post" action="/">
-        <input type="submit" value="Button1" name="b1"/>
-        <input type="submit" value="Button2" name="b2"/>
-    </form>
+    <div>
+{#         do not put this in a <form>, because it will force a refresh#}
+        <button onclick="handleButton('start')">Start</button>
+        <button onclick="handleButton('stop')">Stop</button>
+        Status: <span id="showStatus">{{ init_status }}</span>
+    </div>
+    <br>
     <img src="{{ url_for('video_feed') }}">
-  </body>
+    <br><br>
+{#    last 10 log entries:#}
+{#    <br>#}
+{#    <textarea id="log-textbox" name="log-textbow" rows="4" cols="50">#}
+{#        {{ log }}#}
+{#    </textarea>#}
+</body>
+<script>
+    function handleButton(action) {
+
+        {# inform the server #}
+        const request = new XMLHttpRequest();
+        request.open('POST', `/buttons`);
+
+        {# change the html from within the browser #}
+        request.onload = () => {
+            const status = request.responseText
+            document.getElementById('showStatus').innerHTML = status;
+        }
+        request.send(action);
+    }
+</script>
 </html>
 

@@ -3,34 +3,19 @@ from importlib import import_module
 import os
 from flask import Flask, render_template, Response, request
 
-# import camera driver
-if os.environ.get('CAMERA'):
-    Camera = import_module('camera_' + os.environ['CAMERA']).Camera
-else:
-    from camera import Camera
-
+from camera_opencv import Camera
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
 
 app = Flask(__name__)
 
-
-def handle_buttons(form):
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    if 'b1' in form:
-        print('Button 1 was pressed')
-    elif 'b2' in form:
-        print('Button 2 was pressed')
-    else:
-        print(f"Unknown Button {form=}")
+status = 'running'
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
     """Video streaming home page."""
-    if request.method == 'POST':
-        handle_buttons(request.form)
-    return render_template('index.html')
+    return render_template('index.html', init_status=status)
 
 
 def gen(camera):
@@ -38,6 +23,8 @@ def gen(camera):
     yield b'--frame\r\n'
     while True:
         frame = camera.get_frame()
+        if status == 'stopped':
+            continue
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 
@@ -48,6 +35,18 @@ def video_feed():
         gen(Camera()),
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
+
+
+@app.route('/buttons', methods=['POST', 'GET'])
+def handle_buttons():
+    global status
+    action = request.data.decode()
+    if action == 'start':
+        status = 'running'
+    if action == 'stop':
+        status = 'stopped'
+    print(f"{action=} -> {status}")
+    return status
 
 
 if __name__ == '__main__':
