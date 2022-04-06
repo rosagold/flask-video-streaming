@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+import time
 from importlib import import_module
 import os
+
+import cv2
+import numpy as np
 from flask import Flask, render_template, Response, request
 
 from camera_opencv import Camera
@@ -9,22 +13,24 @@ from camera_opencv import Camera
 
 app = Flask(__name__)
 
-status = 'running'
-
+status = 'init'
+default_frame = cv2.imencode('.jpg', np.zeros((100,100)))[1].tobytes()
 
 @app.route('/')
 def index():
     """Video streaming home page."""
-    return render_template('index.html', init_status=status)
+    return render_template('index.html')
 
 
 def gen(camera):
     """Video streaming generator function."""
     yield b'--frame\r\n'
     while True:
-        frame = camera.get_frame()
         if status == 'stopped':
-            continue
+            time.sleep(1)
+            frame = default_frame
+        else:
+            frame = camera.get_frame()
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
 
@@ -37,7 +43,7 @@ def video_feed():
     )
 
 
-@app.route('/buttons', methods=['POST', 'GET'])
+@app.route('/buttons', methods=['POST'])
 def handle_buttons():
     global status
     action = request.data.decode()
@@ -46,6 +52,11 @@ def handle_buttons():
     if action == 'stop':
         status = 'stopped'
     print(f"{action=} -> {status}")
+    return ''
+
+
+@app.route('/status', methods=['GET'])
+def return_status():
     return status
 
 
