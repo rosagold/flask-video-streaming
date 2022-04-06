@@ -16,20 +16,19 @@
     <br>
     <img src="{{ url_for('video_feed') }}">
     <br><br>
-{#    last 10 log entries:#}
-{#    <br>#}
-{#    <textarea id="log-textbox" name="log-textbow" rows="4" cols="50">#}
-{#        {{ log }}#}
-{#    </textarea>#}
 </body>
 <script>
-    var statusContainer = document.getElementById('showStatus');
-    var eventSource = new EventSource("/status")
+    const statusContainer = document.getElementById('showStatus');
+    const eventSource = new EventSource("/status")
     eventSource.onmessage = function (e) {
         statusContainer.innerHTML = e.data
     };
+
+    /**
+     * Pass an button action to the server.
+     * @param action the action to perform.
+     */
     function handleButton(action) {
-        {# inform the server #}
         const request = new XMLHttpRequest();
         request.open('POST', `/buttons`);
         request.send(action);
