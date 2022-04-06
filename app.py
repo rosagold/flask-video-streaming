@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import threading
 import time
 from importlib import import_module
 import os
@@ -8,18 +9,20 @@ import numpy as np
 from flask import Flask, render_template, Response, request
 
 from camera_opencv import Camera
+
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
 
 app = Flask(__name__)
 
 status = 'init'
-default_frame = cv2.imencode('.jpg', np.zeros((100,100)))[1].tobytes()
+default_frame = cv2.imencode('.jpg', np.zeros((100, 100)))[1].tobytes()
+
 
 @app.route('/')
 def index():
     """Video streaming home page."""
-    return render_template('index.html')
+    return render_template('index.html', initial_status=status)
 
 
 def gen(camera):
@@ -55,9 +58,18 @@ def handle_buttons():
     return ''
 
 
-@app.route('/status', methods=['GET'])
-def return_status():
-    return status
+@app.route('/status')
+def status_stream():
+    def eventStream():
+        last = status
+        while True:
+            if last == status:
+                time.sleep(0.1)
+                continue
+            last = status
+            yield f'data: {status}\n\n'
+
+    return Response(eventStream(), mimetype="text/event-stream")
 
 
 if __name__ == '__main__':
