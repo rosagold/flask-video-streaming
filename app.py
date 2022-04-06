@@ -38,7 +38,9 @@ def handle_buttons():
         logging.debug(f"{action=}, {status=}, => no update")
     else:
         logging.info(f"{action=} => {status=}")
+    if not status_event.is_set():
         status_event.set()
+        time.sleep(0)  # needed for gevent
     return ""
 
 
@@ -74,6 +76,11 @@ def status_feed():
 
 
 if __name__ == "__main__":
-    print("woooo")
+    # either so or so
+    # gunicorn --workers=1 --threads=8 --bind=10.10.10.10:5000 app:app
+    # gunicorn --workers=1 --worker-class gevent --bind=10.10.10.10:5000 app:app
+    print("swoooosh")
     logging.basicConfig(level="DEBUG")
-    app.run(host="0.0.0.0", threaded=True, debug=True)
+    app.run(host="10.10.10.10", threaded=True, debug=True, port=5000)
+
+

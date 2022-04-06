@@ -92,7 +92,7 @@ class BaseCamera(object):
         for frame in frames_iterator:
             BaseCamera.frame = frame
             BaseCamera.event.set()  # send signal to clients
-            time.sleep(0)
+            time.sleep(0)  # needed for gevent
 
             # if there hasn't been any clients asking for frames in
             # the last 10 seconds then stop the thread
