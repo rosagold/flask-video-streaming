@@ -2,38 +2,22 @@
 import logging
 import threading
 import time
-from importlib import import_module
-import os
-
-import cv2
-import numpy as np
 from flask import Flask, render_template, Response, request, session
 
 from camera_opencv import Camera
 
-# Raspberry Pi camera module (requires picamera package)
-# from camera_pi import Camera
-
 app = Flask(__name__)
 app.secret_key = b'asdjcn2388u28*(UY#89h239-*(Y(#@*HYR(Q#@*'
-
 status_event = threading.Event()
 status = "init"
-main_client = None
-clients = 0
-
-
-# @app.route("/dead")
-# def dead():
-#     return "This app is meant to run as a single instance, but another currently " \
-#            "is running. Please refresh the page"
+main_client_id = None
 
 
 @app.route("/")
 def index():
-    global main_client
+    global main_client_id
     session['id'] = threading.get_ident()
-    main_client = session['id']
+    main_client_id = session['id']
     status_event.set()
     time.sleep(0)
     return render_template("index.html", initial_status=status)
@@ -41,7 +25,10 @@ def index():
 
 @app.route("/buttons", methods=["POST"])
 def handle_buttons():
-    global status, viewer_id
+    global status
+    # ignore other clients
+    if session['id'] != main_client_id:
+        return ""
     last = status
     action = request.data.decode()
     if action == "start":
@@ -60,27 +47,24 @@ def handle_buttons():
 
 def frame_stream(id):
     """Video streaming generator function."""
-    print(f'new stream {id}')
+    logging.debug(f'new video_stream {id}')
     camera = Camera()
     yield b"--frame\r\n"
-    while True:
-        if id != main_client:
-            return b"--frame\r\n"
-        else:
-            time.sleep(0.1)
+    while id == main_client_id:
         frame = camera.get_frame()
-        yield b"Content-Type: image/png\r\n\r\n" + frame + b"\r\n--frame\r\n"
+        yield b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n--frame\r\n"
 
 
 def status_stream(id):
+    logging.debug(f'new status_stream {id}')
     while True:
         status_event.wait()
         status_event.clear()
-        if id != main_client:
-            s = "Another client is using the app. Please refresh the page."
-            yield f"data: foo\n\n"
-
-        yield f"data: {status}\n\n"
+        if id == main_client_id:
+            yield f"data: {status}\n\n"
+        else:
+            yield f"data: close\n\n"
+            break
 
 
 @app.route("/video_feed")

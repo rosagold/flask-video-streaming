@@ -24,8 +24,8 @@
     const eventSource = new EventSource("/status")
     eventSource.onmessage = function (e) {
         statusContainer.innerHTML = e.data
-        if (e.data === 'foo'){
-            document.getElementById('main').innerHTML = "cjans ajsnc"
+        if (e.data === 'close'){
+            document.getElementById('main').innerHTML = "Another instance is running. To take over please refresh."
         }
     };
 
