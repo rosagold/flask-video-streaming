@@ -3,10 +3,11 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
+        <title>RaspiCam</title>
     </head>
 <body>
-    <h1>Video Streaming Demonstration</h1>
+    <h1>Streaming Check</h1>
+    <div id="main">
     <div>
 {#         do not put this in a <form>, because it will force a refresh#}
         <button onclick="handleButton('start')">Start</button>
@@ -16,12 +17,16 @@
     <br>
     <img src="{{ url_for('video_feed') }}">
     <br><br>
+    </div>
 </body>
 <script>
     const statusContainer = document.getElementById('showStatus');
     const eventSource = new EventSource("/status")
     eventSource.onmessage = function (e) {
         statusContainer.innerHTML = e.data
+        if (e.data === 'foo'){
+            document.getElementById('main').innerHTML = "cjans ajsnc"
+        }
     };
 
     /**
